@@ -4,12 +4,12 @@ const fs = require('node:fs');
 const fsPromises = require('node:fs/promises');
 const os = require('node:os');
 const path = require('node:path');
-const documentRepository = require('../src/repositories/documentRepository');
 
 const storageDirectory = fs.mkdtempSync(path.join(os.tmpdir(), 'dms-test-'));
 process.env.STORAGE_DIR = storageDirectory;
 process.env.MAX_UPLOAD_SIZE_BYTES = '32';
 
+const documentRepository = require('../src/repositories/documentRepository');
 const app = require('../src/app');
 
 let server;
