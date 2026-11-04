@@ -4,6 +4,7 @@ const fs = require('node:fs');
 const fsPromises = require('node:fs/promises');
 const os = require('node:os');
 const path = require('node:path');
+const documentRepository = require('../src/repositories/documentRepository');
 
 const storageDirectory = fs.mkdtempSync(path.join(os.tmpdir(), 'dms-test-'));
 process.env.STORAGE_DIR = storageDirectory;
@@ -110,4 +111,28 @@ test('uploads, lists and downloads documents only for their owner', async () => 
     })).json()).documents.map((item) => item.id),
     [document.id]
   );
+});
+
+test('rejects storage paths that are not generated document IDs', () => {
+  assert.throws(() => documentRepository.getFilePath('../outside'), TypeError);
+  assert.throws(() => documentRepository.getFilePath('/etc/passwd'), TypeError);
+});
+
+test('returns 400 for malformed multipart requests', async () => {
+  const response = await fetch(`${baseUrl}/upload`, {
+    method: 'POST',
+    headers: {
+      'X-User-Id': 'user-123',
+      'Content-Type': 'multipart/form-data',
+    },
+    body: 'not multipart',
+  });
+
+  assert.equal(response.status, 400);
+  assert.deepEqual(await response.json(), {
+    error: {
+      code: 'INVALID_MULTIPART',
+      message: 'A requisição de upload é inválida.',
+    },
+  });
 });

@@ -4,6 +4,7 @@ const express = require('express');
 const multer = require('multer');
 const { maxUploadSizeBytes, storageDirectory } = require('../config/storageConfig');
 const documentController = require('../controllers/documentController');
+const HttpError = require('../errors/HttpError');
 
 const router = express.Router();
 
@@ -25,10 +26,26 @@ const upload = multer({
   },
 });
 
+function uploadFile(req, res, next) {
+  upload.single('file')(req, res, (error) => {
+    if (
+      error &&
+      ['Malformed part header', 'Multipart: Boundary not found', 'Unexpected end of form']
+        .includes(error.message)
+    ) {
+      return next(
+        new HttpError(400, 'INVALID_MULTIPART', 'A requisição de upload é inválida.')
+      );
+    }
+
+    return next(error);
+  });
+}
+
 router.post(
   '/upload',
   documentController.requireUserId,
-  upload.single('file'),
+  uploadFile,
   documentController.upload
 );
 router.get('/documents', documentController.requireUserId, documentController.list);

@@ -2,6 +2,8 @@ const path = require('node:path');
 const { storageDirectory } = require('../config/storageConfig');
 
 const documents = new Map();
+const UUID_PATTERN =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
 function toPublicDocument(document) {
   return {
@@ -36,7 +38,17 @@ function findByIdAndOwner(id, owner) {
 }
 
 function getFilePath(id) {
-  return path.join(storageDirectory, id);
+  if (typeof id !== 'string' || !UUID_PATTERN.test(id)) {
+    throw new TypeError('Identificador de documento inválido.');
+  }
+
+  const filePath = path.resolve(storageDirectory, id);
+  const relativePath = path.relative(storageDirectory, filePath);
+  if (relativePath.startsWith('..') || path.isAbsolute(relativePath)) {
+    throw new TypeError('Caminho do documento fora do diretório de armazenamento.');
+  }
+
+  return filePath;
 }
 
 async function removeStoredFile(id) {
