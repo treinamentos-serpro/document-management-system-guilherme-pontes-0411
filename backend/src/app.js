@@ -13,9 +13,10 @@
 const express = require('express');
 const documentRoutes = require('./routes/documentRoutes');
 const errorHandler = require('./middleware/errorHandler');
+const { getPort } = require('./config/serverConfig');
 
 const app = express();
-const PORT = process.env.PORT || 3000;
+const PORT = getPort();
 
 app.use(express.json());
 app.use('/', documentRoutes);
